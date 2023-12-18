@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# $FreeBSD:
+#
+# PROVIDE: linux-plexmediaserver
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+
+. /etc/rc.subr
+
+name=linux-plexmediaserver
+rcvar=linux-plexmediaserver_enable
+
+start_cmd=linux-plexmediaserver_start
+stop_cmd=linux-plexmediaserver_stop
+
+linux-plexmediaserver_start() {
+    echo "Starting plexmediaserver..."
+    CHECK=$(ps aux | grep "Plex Media Server" | grep -v grep)
+    STATUS=$?
+ 
+    # make sure plexmediaserver isn't running yet
+    if [ "$STATUS" == "1" ]; then
+       touch $PIDFILE
+       chown plex:plex $PIDFILE
+ 
+        # Start plexmediaserver
+       su dlna -c "/usr/bin/start_pms &"
+    else
+        echo "plexmediaserver is already active and running under PID: $(cat $PIDFILE)"
+        echo "if you think this is wrong, remove the offending PID file"
+        echo "and restart plexmediaserver"
+        exit 1
+    fi
+}
+ 
+linux-plexmediaserver_stop() {
+    echo -n "Stopping plexmediaserver..."
+    killall "Plex Media Server"
+    echo "done"
+}
+
+load_rc_config $name
+run_rc_command "$1"
